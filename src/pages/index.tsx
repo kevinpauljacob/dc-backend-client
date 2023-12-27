@@ -5,7 +5,7 @@ import {
   toMetaplexFile,
   walletAdapterIdentity,
 } from "@metaplex-foundation/js";
-import { Connection } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import axios from "axios";
@@ -13,19 +13,29 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import NFTDetails from "@/components/nftDetails/NFTDetails";
 
+interface NFT {
+  uri: string;
+  name: string;
+  sellerFeeBasisPoints: number;
+  symbol: string;
+  creators: Object;
+  isMutable: boolean;
+  address: PublicKey;
+}
+
 export default function Home() {
-  const [file, setFile] = useState(null);
-  const [nftName, setNFTName] = useState("");
-  const [nftDescription, setNFTDescription] = useState("");
-  const [tokenId, setTokenId] = useState("");
-  const [nftSymbol, setNFTSymbol] = useState("");
-  const [imgUri, setImgUri] = useState("");
-  const [arweaveImgUri, setArweaveImgUri] = useState("");
-  const [metaDataUri, setMetaDataUri] = useState("");
-  const [explorerAddress, setExplorerAddress] = useState("");
-  const [loadingState, setLoadingState] = useState(false);
-  const [showNFTDetails, setShowNFTDetails] = useState(false);
-  const [publicKey, setPublicKey] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [nftName, setNFTName] = useState<string>("");
+  const [nftDescription, setNFTDescription] = useState<string>("");
+  const [tokenId, setTokenId] = useState<number>(0);
+  const [nftSymbol, setNFTSymbol] = useState<string>("");
+  const [imgUri, setImgUri] = useState<string>("");
+  const [arweaveImgUri, setArweaveImgUri] = useState<string>("");
+  const [metaDataUri, setMetaDataUri] = useState<string>("");
+  const [explorerAddress, setExplorerAddress] = useState<string>("");
+  const [loadingState, setLoadingState] = useState<boolean>(false);
+  const [showNFTDetails, setShowNFTDetails] = useState<boolean>(false);
+  const [publicKey, setPublicKey] = useState<unknown | PublicKey>("");
 
   const RPC_ENDPOINT =
     "https://old-small-tent.solana-devnet.discover.quiknode.pro/34f843136b5a8476e55f8b424fb9c3a04938c912/";
@@ -52,16 +62,16 @@ export default function Home() {
     setPublicKey(METAPLEX.identity().publicKey.toBase58());
   }, [METAPLEX]);
 
-  const handleFileUpload = (e) => {
-    const uploadedFile = e.target.files[0];
-    setFile(uploadedFile);
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadedFile = e.target.files?.[0];
+    setFile(uploadedFile || null);
   };
 
   async function uploadImage(file: File) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
 
-      reader.onload = async (event) => {
+      reader.onload = async (event: any) => {
         try {
           const imgBuffer = new Uint8Array(event.target.result);
           const imgMetaplexFile = toMetaplexFile(imgBuffer, file.name);
@@ -137,7 +147,7 @@ export default function Home() {
     try {
       console.log("Step 3 - Minting NFT");
 
-      const { nft } = await METAPLEX.nfts().create(
+      const { nft }: { nft: NFT } = await METAPLEX.nfts().create(
         {
           uri: metadataUri,
           name: name,
@@ -171,7 +181,7 @@ export default function Home() {
           { newNFTData: nftData }
         );
 
-        if (response.status === 201) {
+        if (response.status === 201 && response.data) {
           console.log("Data sent to server successfully");
         } else {
           console.error("Failed to send data to the server");
@@ -216,7 +226,7 @@ export default function Home() {
         { trait_type: "Background", value: "QuickNode Blue" },
       ];
       const metadataUri = await uploadMetadata(
-        imgUri,
+        imgUri as string,
         imgType,
         nftName,
         nftDescription,
@@ -233,7 +243,7 @@ export default function Home() {
       setNFTDescription("");
       setImgUri("");
       setNFTSymbol("");
-      setTokenId("");
+      setTokenId(0);
     } catch (error) {
       console.error("Error minting NFT:", error);
     }
@@ -276,8 +286,8 @@ export default function Home() {
           className="my-5 bg-[#171717] border border-white focus:outline-none focus:border-white/70 transition duration-300 ease-in-out hover:transition hover:duration-300 hover:ease-in-out rounded-md p-2.5"
           type="text"
           placeholder="Token ID"
-          value={tokenId}
-          onChange={(e) => setTokenId(e.target.value)}
+          value={tokenId.toString()}
+          onChange={(e) => setTokenId(parseInt(e.target.value, 10))}
         />
         <input
           className="my-5 bg-[#171717] border border-white focus:outline-none focus:border-white/70 transition duration-300 ease-in-out hover:transition hover:duration-300 hover:ease-in-out rounded-md p-2.5"
