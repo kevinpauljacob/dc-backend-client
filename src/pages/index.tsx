@@ -20,7 +20,7 @@ interface NFT {
   symbol: string;
   creators: Object;
   isMutable: boolean;
-  address: PublicKey;
+  address: string | PublicKey;
 }
 
 export default function Home() {
@@ -35,7 +35,7 @@ export default function Home() {
   const [explorerAddress, setExplorerAddress] = useState<string>("");
   const [loadingState, setLoadingState] = useState<boolean>(false);
   const [showNFTDetails, setShowNFTDetails] = useState<boolean>(false);
-  const [publicKey, setPublicKey] = useState<unknown | PublicKey>("");
+  const [publicKey, setPublicKey] = useState<PublicKey | string>();
 
   const RPC_ENDPOINT =
     "https://old-small-tent.solana-devnet.discover.quiknode.pro/34f843136b5a8476e55f8b424fb9c3a04938c912/";
@@ -173,7 +173,7 @@ export default function Home() {
         });
         setLoadingState(false);
         const nftData = {
-          [nft.address]: publicKey,
+          [nft.address.toString()]: publicKey,
         };
 
         const response = await axios.post(
@@ -287,7 +287,16 @@ export default function Home() {
           type="text"
           placeholder="Token ID"
           value={tokenId.toString()}
-          onChange={(e) => setTokenId(parseInt(e.target.value, 10))}
+          onChange={(e) => {
+            const inputVal = e.target.value;
+            const parsedValue = parseInt(inputVal, 10);
+
+            if (!isNaN(parsedValue)) {
+              setTokenId(parsedValue);
+            } else {
+              setTokenId(0);
+            }
+          }}
         />
         <input
           className="my-5 bg-[#171717] border border-white focus:outline-none focus:border-white/70 transition duration-300 ease-in-out hover:transition hover:duration-300 hover:ease-in-out rounded-md p-2.5"
